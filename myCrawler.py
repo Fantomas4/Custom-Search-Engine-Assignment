@@ -51,7 +51,7 @@ def crawler(startingUrl, size, numberOfThreads, append=True):
     else:
         file = open("crawler.txt", "a+")
     for bag in bagPerPage[:size]:
-        file.write(bag["url"] + " " + bag["title"] + " ")
+        file.write(bag["url"] + "$$!" + bag["title"] + "$$!")
         for element in bag["bag"].keys():
             file.write(element + "-" + str(bag["bag"][element]) + ",")
         file.write("\n")
