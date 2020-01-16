@@ -107,15 +107,15 @@ def getUrl(url: str, bagPerPage: list, bagLocker, head: list, headLocker,
         return
 
 
-if __name__ == "__main__":
-    startingUrl = str(sys.argv[1])
-    size = int(sys.argv[2])
-    willAppend = int(sys.argv[3])
-    threads = int(sys.argv[4])
-    if willAppend == 0:
-        crawler(startingUrl, size, threads, False)
-    else:
-        crawler(startingUrl, size, threads)
+# if __name__ == "__main__":
+#     startingUrl = str(sys.argv[1])
+#     size = int(sys.argv[2])
+#     willAppend = int(sys.argv[3])
+#     threads = int(sys.argv[4])
+#     if willAppend == 0:
+#         crawler(startingUrl, size, threads, False)
+#     else:
+#         crawler(startingUrl, size, threads)
 
-# url = "https://en.wikipedia.org/wiki/Apage"
-# print(crawler(url, 2, 8, False))
+url = "https://en.wikipedia.org/wiki/Apage"
+print(crawler(url, 2, 8, False))
