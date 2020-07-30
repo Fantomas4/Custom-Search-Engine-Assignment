@@ -58,7 +58,7 @@ class Crawler:
             html = request.urlopen(url).read().decode('utf8')
             raw = BeautifulSoup(html, 'html.parser')
             title = raw.title.string
-            if self.mongo_connection.exists(title, url):
+            if self.mongo_connection.crawler_record_exists(title, url):
                 return
         except Exception:
             return
@@ -83,7 +83,7 @@ class Crawler:
             lemmedWords = [lem.lemmatize(word) for word in filteredWords]
             with self.count_locker:  # here will be saved to mongo and increase global counter
                 if self.global_counter < self.size:
-                    self.mongo_connection.add({"url": url, "title": title, "bag": Counter(lemmedWords)})
+                    self.mongo_connection.add_crawler_record({"url": url, "title": title, "bag": Counter(lemmedWords)})
                     self.global_counter += 1
         except Exception:  # something went wrong during this phase, so we will not have any results
             return
