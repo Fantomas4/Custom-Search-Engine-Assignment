@@ -6,8 +6,8 @@ import sys
 
 from dotenv import load_dotenv
 
-from Connect_to_mongo import Connect_to_mongo
-from Crawler import Crawler
+from connect_to_mongo import Connect_to_mongo
+from crawler import Crawler
 
 if __name__ == "__main__":
     load_dotenv()  # load enviromental variables from .env

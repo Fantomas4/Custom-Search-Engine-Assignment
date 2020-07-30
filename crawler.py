@@ -6,7 +6,7 @@ from urllib import request
 import nltk
 from bs4 import BeautifulSoup
 from nltk.stem.wordnet import WordNetLemmatizer
-from Connect_to_mongo import Connect_to_mongo
+from connect_to_mongo import Connect_to_mongo
 
 
 class Crawler:
@@ -50,7 +50,7 @@ class Crawler:
                     break
                 else:
                     time.sleep(0.5)
-        print("Crawl stopped ... ")
+        print("Crawling finished!")
 
     def parseUrl(self, *url_chars):
         url = "".join(url_chars)
