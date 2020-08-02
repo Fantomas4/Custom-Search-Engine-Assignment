@@ -6,12 +6,12 @@ from urllib import request
 import nltk
 from bs4 import BeautifulSoup
 from nltk.stem.wordnet import WordNetLemmatizer
-from connect_to_mongo import Connect_to_mongo
+from connect_to_mongo import ConnectToMongo
 
 
 class Crawler:
 
-    def __init__(self, startingUrl: str, mongo_connection: Connect_to_mongo, append: bool, size: int,
+    def __init__(self, startingUrl: str, mongo_connection: ConnectToMongo, append: bool, size: int,
                  numberOfThreads: int):
         print("Downloading natural language packages...")
         nltk.download('punkt')
