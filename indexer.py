@@ -1,3 +1,5 @@
+import time
+
 from connect_to_mongo import ConnectToMongo
 
 
@@ -5,12 +7,11 @@ class Indexer:
 
     def __init__(self, mongo_connection: ConnectToMongo):
         self.mongo_connection = mongo_connection
+        self.build_index()
 
-        # test
-        self.add_document()
+    def build_index(self):
 
-    def add_document(self):
-        # test
+        tic = time.perf_counter()
         for document in self.mongo_connection.find_all_crawler_records():
             url = document["url"]
             title = document["title"]
@@ -31,3 +32,5 @@ class Indexer:
                                                                          "url": url,
                                                                          "w_d_freq": bag[word]}]
                                                            })
+        toc = time.perf_counter()
+        print("Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
