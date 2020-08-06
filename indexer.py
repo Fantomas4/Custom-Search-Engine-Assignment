@@ -1,3 +1,4 @@
+import math
 import time
 
 from connect_to_mongo import ConnectToMongo
@@ -6,6 +7,7 @@ from connect_to_mongo import ConnectToMongo
 class Indexer:
 
     def __init__(self, mongo_connection: ConnectToMongo):
+        self.docs_count = 0
         self.doc_lengths = {}
 
         self.mongo_connection = mongo_connection
@@ -15,6 +17,8 @@ class Indexer:
     def build_index(self):
         tic = time.perf_counter()
         for document in self.mongo_connection.find_all_crawler_records():
+            self.docs_count += 1
+
             doc_id = document["_id"]
             url = document["url"]
             title = document["title"]
@@ -52,12 +56,40 @@ class Indexer:
             if document["_id"] == doc_id:
                 return document["w_d_freq"]
         # If no w_d_freq data was found, the document is not present in the target term's
-        # document list, so we return None.
-        return None
+        # document list, so we return 0.
+        return 0
 
     def calculate_doc_length(self):
-        # print(self.mongo_connection.find_all_index_entries())
+        #test only!
+        print(self.docs_count)
         for doc_id in self.doc_lengths.keys():
+            # Initialize the score accumulator for the current document to 0
+            squared_weights_sum = 0
+
+            # Find maximum word-document frequency value to be used in normalization
+            max_w_d_freq = 1
+            for term_record in self.mongo_connection.find_all_index_entries():
+                w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
+                if w_d_freq > max_w_d_freq:
+                    max_w_d_freq = w_d_freq
+
             for term_record in self.mongo_connection.find_all_index_entries():
                 w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
                 w_freq = term_record["w_freq"]
+
+                norm_w_d_freq = w_d_freq / max_w_d_freq
+                if self.docs_count > 1:
+                    norm_inv_d_freq = math.log(self.docs_count / w_freq) / math.log(self.docs_count)
+                else:
+                    # If the document collections consists of just 1 document, set inverted document frequency
+                    # variable to 1 (thus ignoring inverted document frequency scoring)
+                    norm_inv_d_freq = 1
+
+                squared_weights_sum += math.pow(norm_w_d_freq * norm_inv_d_freq, 2)
+
+            # Calculate current document's length and add the document:length pair to the doc_lengths dictionary.
+            doc_len = math.sqrt(squared_weights_sum)
+            self.doc_lengths[doc_id] = doc_len
+
+        #test only!
+        print(self.doc_lengths)

@@ -15,9 +15,6 @@ class ConnectToMongo:
     def find_all_crawler_records(self):
         return self.crawler_db.find({})
 
-    def get_crawler_records_size(self):
-        return self.crawler_db.count()
-
     def crawler_record_exists(self, title, url):
         return self.crawler_db.find_one({"title": title, "url": url}) is not None
 
