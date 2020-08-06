@@ -15,6 +15,9 @@ class ConnectToMongo:
     def find_all_crawler_records(self):
         return self.crawler_db.find({})
 
+    def get_crawler_records_size(self):
+        return self.crawler_db.count()
+
     def crawler_record_exists(self, title, url):
         return self.crawler_db.find_one({"title": title, "url": url}) is not None
 
@@ -28,6 +31,9 @@ class ConnectToMongo:
         documents.append(new_data)
         self.indexer_db.update({"word": word},
                                {"$set": {"w_freq": w_freq, "documents": documents}})
+
+    def find_all_index_entries(self):
+        return self.indexer_db.find({})
 
     def index_entry_exists(self, word):
         return self.indexer_db.find_one({"word": word}) is not None
