@@ -32,4 +32,5 @@ if __name__ == "__main__":
 
     # test
     indexer = Indexer(mongo_connection)
+    # query_handler = QueryHandler(mongo_connection)
 

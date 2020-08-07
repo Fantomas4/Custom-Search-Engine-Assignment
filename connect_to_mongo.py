@@ -7,6 +7,8 @@ class ConnectToMongo:
         self.database = database
         self.client = MongoClient(ip, username=username, password=password, authSource="admin")[database]
         self.crawler_db = self.client.crawler_records
+        self.documents_db = self.client.documents
+        self.docs_len_db = self.client.documents_length
         self.indexer_db = self.client.index
 
     def add_crawler_record(self, json):
@@ -17,6 +19,18 @@ class ConnectToMongo:
 
     def crawler_record_exists(self, title, url):
         return self.crawler_db.find_one({"title": title, "url": url}) is not None
+
+    def build_documents_db(self):
+        self.documents_db.insert_many(self.crawler_db.find({}))
+
+    def find_all_document_records(self):
+        return self.documents_db.find({})
+
+    def add_document_len_entries(self, entries_batch):
+        self.docs_len_db.insert_many(entries_batch)
+
+    def find_document_len_entry(self, doc_id):
+        return self.docs_len_db.find_one({"_id": doc_id})
 
     def add_index_entry(self, json):
         self.indexer_db.insert_one(json)
@@ -35,10 +49,16 @@ class ConnectToMongo:
     def index_entry_exists(self, word):
         return self.indexer_db.find_one({"word": word}) is not None
 
-    def drop(self):
+    def reset_crawler(self):
         self.crawler_db.drop()
-        self.indexer_db.drop()
         self.crawler_db = self.client.crawler_records
+
+    def reset_index(self):
+        self.indexer_db.drop()
+        self.documents_db.drop()
+        self.docs_len_db.drop()
         self.indexer_db = self.client.index
+        self.documents_db = self.client.documents
+        self.docs_len_db = self.client.documents_length
 
 

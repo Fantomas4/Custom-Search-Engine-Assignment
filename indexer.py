@@ -12,11 +12,25 @@ class Indexer:
 
         self.mongo_connection = mongo_connection
         self.build_index()
-        self.calculate_doc_length()
+        self.calculate_doc_lengths()
+        self.store_doc_length_data_to_db()
+
+    def store_doc_length_data_to_db(self):
+        entries_batch = []
+        for doc_id in self.doc_lengths.keys():
+            entries_batch.append({"_id": doc_id, "length": self.doc_lengths[doc_id]})
+
+        self.mongo_connection.add_document_len_entries(entries_batch)
 
     def build_index(self):
         tic = time.perf_counter()
-        for document in self.mongo_connection.find_all_crawler_records():
+
+        # Reset index related database collections
+        self.mongo_connection.reset_index()
+
+        # Copy all records from "Crawler Records" db collection to "Documents" db collection.
+        self.mongo_connection.build_documents_db()
+        for document in self.mongo_connection.find_all_document_records():
             self.docs_count += 1
 
             doc_id = document["_id"]
@@ -59,9 +73,7 @@ class Indexer:
         # document list, so we return 0.
         return 0
 
-    def calculate_doc_length(self):
-        #test only!
-        print(self.docs_count)
+    def calculate_doc_lengths(self):
         for doc_id in self.doc_lengths.keys():
             # Initialize the score accumulator for the current document to 0
             squared_weights_sum = 0
@@ -93,3 +105,4 @@ class Indexer:
 
         #test only!
         print(self.doc_lengths)
+        print(self.docs_count)

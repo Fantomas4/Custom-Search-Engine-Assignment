@@ -26,7 +26,7 @@ class Crawler:
         self.numberOfThreads = numberOfThreads
         self.mongo_connection = mongo_connection
         if not append:
-            mongo_connection.drop()
+            mongo_connection.reset_crawler()
 
     def crawl(self):
         print("Start crawling...")
