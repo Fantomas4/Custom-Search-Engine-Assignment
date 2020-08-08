@@ -32,6 +32,7 @@ class ConnectToMongo:
         return self.documents_db.find({})
 
     def add_lengths_to_document_db(self, doc_lengths):
+        print("DIAG: doc_lengths.keys(): ", doc_lengths.keys())
         for doc_id in doc_lengths.keys():
             self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_lengths[doc_id]}})
 

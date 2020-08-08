@@ -33,12 +33,7 @@ class Indexer:
             title = document["title"]
             bag = document["bag"]
 
-            # # For every document, add an empty entry to "doc_length" dictionary, initializing length with -1
-            # self.doc_lengths[doc_id] = -1
-
             for word in bag:
-                # print(word + " " + str(bag[word]))
-
                 # Check if the word already exists in the inverted index
                 if self.mongo_connection.index_entry_exists(word):
                     # If the word exists in the index, update the word entry's data
