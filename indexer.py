@@ -13,15 +13,6 @@ class Indexer:
         self.mongo_connection = mongo_connection
 
         self.build_index()
-        # self.store_doc_length_data_to_db()
-
-
-    # def store_doc_length_data_to_db(self):
-    #     entries_batch = []
-    #     for doc_id in self.doc_lengths.keys():
-    #         entries_batch.append({"_id": doc_id, "length": self.doc_lengths[doc_id]})
-    #
-    #     self.mongo_connection.add_document_len_entries(entries_batch)
 
     def build_index(self):
         tic = time.perf_counter()
@@ -32,9 +23,11 @@ class Indexer:
         # Copy all records from "Crawler Records" db collection to "Documents" db collection.
         self.mongo_connection.build_documents_db()
 
-        for document in self.mongo_connection.find_all_document_records():
-            self.docs_count += 1
+        # Get the documents total count
+        self.docs_count = self.mongo_connection.get_documents_count()
+        print("DIAG: docs_count: ", self.docs_count)
 
+        for document in self.mongo_connection.find_all_document_records():
             doc_id = document["_id"]
             url = document["url"]
             title = document["title"]
@@ -118,6 +111,4 @@ class Indexer:
         # Add calculated lengths to the corresponding document records.
         self.mongo_connection.add_lengths_to_document_db(self.doc_lengths)
 
-        #test only!
-        print(self.doc_lengths)
-        # print(self.docs_count)
+

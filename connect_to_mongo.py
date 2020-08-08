@@ -22,6 +22,12 @@ class ConnectToMongo:
     def build_documents_db(self):
         self.documents_db.insert_many(self.crawler_db.find({}))
 
+    def get_documents_count(self):
+        return self.documents_db.count()
+
+    def find_document_record(self, doc_id):
+        return self.documents_db.find_one({"_id": doc_id})
+
     def find_all_document_records(self):
         return self.documents_db.find({})
 
@@ -39,6 +45,9 @@ class ConnectToMongo:
         documents.append(new_data)
         self.indexer_db.update({"word": word},
                                {"$set": {"w_freq": w_freq, "documents": documents}})
+
+    def find_index_entry(self, term):
+        return self.indexer_db.find_one({"word": term})
 
     def find_all_index_entries(self):
         return self.indexer_db.find({})

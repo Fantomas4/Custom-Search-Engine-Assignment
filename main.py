@@ -9,6 +9,7 @@ from dotenv import load_dotenv
 from connect_to_mongo import ConnectToMongo
 from crawler import Crawler
 from indexer import Indexer
+from query_handler import QueryHandler
 
 if __name__ == "__main__":
     load_dotenv()  # load enviromental variables from .env
@@ -32,5 +33,5 @@ if __name__ == "__main__":
 
     # test
     indexer = Indexer(mongo_connection)
-    # query_handler = QueryHandler(mongo_connection)
+    query_handler = QueryHandler(mongo_connection)
 
