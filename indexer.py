@@ -11,16 +11,17 @@ class Indexer:
         self.doc_lengths = {}
 
         self.mongo_connection = mongo_connection
+
         self.build_index()
-        self.calculate_doc_lengths()
-        self.store_doc_length_data_to_db()
+        # self.store_doc_length_data_to_db()
 
-    def store_doc_length_data_to_db(self):
-        entries_batch = []
-        for doc_id in self.doc_lengths.keys():
-            entries_batch.append({"_id": doc_id, "length": self.doc_lengths[doc_id]})
 
-        self.mongo_connection.add_document_len_entries(entries_batch)
+    # def store_doc_length_data_to_db(self):
+    #     entries_batch = []
+    #     for doc_id in self.doc_lengths.keys():
+    #         entries_batch.append({"_id": doc_id, "length": self.doc_lengths[doc_id]})
+    #
+    #     self.mongo_connection.add_document_len_entries(entries_batch)
 
     def build_index(self):
         tic = time.perf_counter()
@@ -30,6 +31,7 @@ class Indexer:
 
         # Copy all records from "Crawler Records" db collection to "Documents" db collection.
         self.mongo_connection.build_documents_db()
+
         for document in self.mongo_connection.find_all_document_records():
             self.docs_count += 1
 
@@ -38,8 +40,8 @@ class Indexer:
             title = document["title"]
             bag = document["bag"]
 
-            # For every document, add an empty entry to "doc_length" dictionary, initializing length with -1
-            self.doc_lengths[doc_id] = -1
+            # # For every document, add an empty entry to "doc_length" dictionary, initializing length with -1
+            # self.doc_lengths[doc_id] = -1
 
             for word in bag:
                 # print(word + " " + str(bag[word]))
@@ -61,6 +63,11 @@ class Indexer:
                                                                           "url": url,
                                                                           "w_d_freq": bag[word]}]
                                                            })
+
+        # Calculate the document lengths of the given document collection, and store them as a new property
+        # of each document record.
+        self.calculate_doc_lengths()
+
         toc = time.perf_counter()
         print("Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
 
@@ -74,7 +81,9 @@ class Indexer:
         return 0
 
     def calculate_doc_lengths(self):
-        for doc_id in self.doc_lengths.keys():
+        for document in self.mongo_connection.find_all_document_records():
+            doc_id = document["_id"]
+
             # Initialize the score accumulator for the current document to 0
             squared_weights_sum = 0
 
@@ -84,6 +93,8 @@ class Indexer:
                 w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
                 if w_d_freq > max_w_d_freq:
                     max_w_d_freq = w_d_freq
+
+            print("DIAG: max_w_d_freq is: ", max_w_d_freq)
 
             for term_record in self.mongo_connection.find_all_index_entries():
                 w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
@@ -101,8 +112,12 @@ class Indexer:
 
             # Calculate current document's length and add the document:length pair to the doc_lengths dictionary.
             doc_len = math.sqrt(squared_weights_sum)
+            print("DIAG: doc_len is: ", doc_len)
             self.doc_lengths[doc_id] = doc_len
+
+        # Add calculated lengths to the corresponding document records.
+        self.mongo_connection.add_lengths_to_document_db(self.doc_lengths)
 
         #test only!
         print(self.doc_lengths)
-        print(self.docs_count)
+        # print(self.docs_count)

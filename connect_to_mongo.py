@@ -8,7 +8,6 @@ class ConnectToMongo:
         self.client = MongoClient(ip, username=username, password=password, authSource="admin")[database]
         self.crawler_db = self.client.crawler_records
         self.documents_db = self.client.documents
-        self.docs_len_db = self.client.documents_length
         self.indexer_db = self.client.index
 
     def add_crawler_record(self, json):
@@ -26,11 +25,9 @@ class ConnectToMongo:
     def find_all_document_records(self):
         return self.documents_db.find({})
 
-    def add_document_len_entries(self, entries_batch):
-        self.docs_len_db.insert_many(entries_batch)
-
-    def find_document_len_entry(self, doc_id):
-        return self.docs_len_db.find_one({"_id": doc_id})
+    def add_lengths_to_document_db(self, doc_lengths):
+        for doc_id in doc_lengths.keys():
+            self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_lengths[doc_id]}})
 
     def add_index_entry(self, json):
         self.indexer_db.insert_one(json)
@@ -56,9 +53,7 @@ class ConnectToMongo:
     def reset_index(self):
         self.indexer_db.drop()
         self.documents_db.drop()
-        self.docs_len_db.drop()
         self.indexer_db = self.client.index
         self.documents_db = self.client.documents
-        self.docs_len_db = self.client.documents_length
 
 
