@@ -43,7 +43,7 @@ class QueryHandler:
 
             if k == top_k:
                 break
-        
+
         return query_results
 
         # test only!
