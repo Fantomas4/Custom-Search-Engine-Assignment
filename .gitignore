@@ -1,2 +1,5 @@
 /env/
 /venv/
+mongo-volume/*
+__pycache__/*
+.idea/*

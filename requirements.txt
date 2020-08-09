@@ -1,0 +1,9 @@
+beautifulsoup4==4.9.1
+click==7.1.2
+joblib==0.16.0
+nltk==3.5
+pymongo==3.10.1
+python-dotenv==0.14.0
+regex==2020.7.14
+soupsieve==2.0.1
+tqdm==4.48.0

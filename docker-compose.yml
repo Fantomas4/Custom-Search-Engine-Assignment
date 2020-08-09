@@ -1,0 +1,9 @@
+version: '3'
+services:
+  database:
+    image: 'mongo:latest'
+    container_name: 'cse_mongo'
+    env_file:
+      - .env
+    ports:
+      - '27017-27019:27017-27019'
