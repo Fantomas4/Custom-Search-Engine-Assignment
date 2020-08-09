@@ -15,7 +15,7 @@ def index():
     if request.method == 'POST':
         query = request.form['query']
         #transform query
-        #make the question to inverse catalog
+        #make the question to inverse catalog.
         webpage = Webpage(title="This is a huge title", url="https://www.facebook.com", similarity=0.7)
         return render_template("index.html", webpages=[webpage])
     else:
