@@ -1,5 +1,5 @@
 # Crawler #
-This project is a simple crawler, that runs in parallel. All data are saved in a mongodb from which further analysis can be made.
+This project is a simple crawler, that runs in parallel. All data provided by the crawler are saved in a MongoDB database. Further analysis of the data is carried out using this database.
 
 ## Installation ##
 pip3 install -r requirements.txt  
