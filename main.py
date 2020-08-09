@@ -6,8 +6,10 @@ import sys
 
 from dotenv import load_dotenv
 
-from connect_to_mongo import Connect_to_mongo
+from connect_to_mongo import ConnectToMongo
 from crawler import Crawler
+from indexer import Indexer
+from query_handler import QueryHandler
 
 if __name__ == "__main__":
     load_dotenv()  # load enviromental variables from .env
@@ -15,8 +17,8 @@ if __name__ == "__main__":
     password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
     database = os.getenv("MONGO_INITDB_DATABASE")
     ip = os.getenv("MONGO_IP")
-    mongo_connection = Connect_to_mongo(username=username, password=password, database=database,
-                                        ip=ip)  # connecting to mongo
+    mongo_connection = ConnectToMongo(username=username, password=password, database=database,
+                                      ip=ip)  # connecting to mongo
     startingUrl = str(sys.argv[1])  # get variables from commandline
     size = int(sys.argv[2])
     willAppend = int(sys.argv[3])
@@ -28,4 +30,8 @@ if __name__ == "__main__":
         crawler = Crawler(startingUrl=startingUrl, mongo_connection=mongo_connection, append=True, size=size,
                           numberOfThreads=threads)
     crawler.crawl()
+
+    # test
+    indexer = Indexer(mongo_connection)
+    query_handler = QueryHandler(mongo_connection)
 

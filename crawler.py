@@ -6,12 +6,12 @@ from urllib import request
 import nltk
 from bs4 import BeautifulSoup
 from nltk.stem.wordnet import WordNetLemmatizer
-from connect_to_mongo import Connect_to_mongo
+from connect_to_mongo import ConnectToMongo
 
 
 class Crawler:
 
-    def __init__(self, startingUrl: str, mongo_connection: Connect_to_mongo, append: bool, size: int,
+    def __init__(self, startingUrl: str, mongo_connection: ConnectToMongo, append: bool, size: int,
                  numberOfThreads: int):
         print("Downloading natural language packages...")
         nltk.download('punkt')
@@ -26,7 +26,7 @@ class Crawler:
         self.numberOfThreads = numberOfThreads
         self.mongo_connection = mongo_connection
         if not append:
-            mongo_connection.drop()
+            mongo_connection.reset_crawler()
 
     def crawl(self):
         print("Start crawling...")
@@ -58,7 +58,7 @@ class Crawler:
             html = request.urlopen(url).read().decode('utf8')
             raw = BeautifulSoup(html, 'html.parser')
             title = raw.title.string
-            if self.mongo_connection.exists(title, url):
+            if self.mongo_connection.crawler_record_exists(title, url):
                 return
         except Exception:
             return
@@ -83,7 +83,7 @@ class Crawler:
             lemmedWords = [lem.lemmatize(word) for word in filteredWords]
             with self.count_locker:  # here will be saved to mongo and increase global counter
                 if self.global_counter < self.size:
-                    self.mongo_connection.add({"url": url, "title": title, "bag": Counter(lemmedWords)})
+                    self.mongo_connection.add_crawler_record({"url": url, "title": title, "bag": Counter(lemmedWords)})
                     self.global_counter += 1
         except Exception:  # something went wrong during this phase, so we will not have any results
             return
