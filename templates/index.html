@@ -5,35 +5,32 @@
 {% endblock %}
 
 {% block body %}
-<div class="content">
-    <h1 style="text-align: center">Better than Google</h1>
-    <form action="/" method="POST">
-        <input type="text" name="query" id="query">
-        <input type="submit" value="Submit Query">
-    </form>
-    <br>
-    {% if webpages|length < 1 %}
+<h1 id="title">Better than Google</h1>
+<form id="search-form" action="/" method="POST">
+    <input type="text" name="query" id="query">
+    <input type="submit" value="Submit Query">
+</form>
+<br>
 
-    {% else %}
-    <table>
+{% if webpages|length < 1 %}
+
+{% else %}
+<table>
+    <tr>
+        <th>Title</th>
+        <th>Url</th>
+{#            <th>Similarity</th>#}
+    </tr>
+    {% for webpage in webpages %}
         <tr>
-            <th>Title</th>
-            <th>Url</th>
-            <th>Similarity</th>
+            <td>{{ webpage["title"]}}</td>
+            <td>
+                <a href="{{webpage["url"]}}">{{ webpage["url"]}}</a>
+            </td>
+{#                <td>{{webpage.similarity}}</td>#}
         </tr>
-        {% for webpage in webpages %}
-            <tr>
-                <td>{{ webpage.title}}</td>
-                <td>
-                    <a href="{{webpage.url}}">{{ webpage.url}}</a>
-                </td>
-                <td>{{webpage.similarity}}</td>
-            </tr>
-        {% endfor %}
-    </table>
-    {% endif %}
+    {% endfor %}
+</table>
+{% endif %}
 
-
-
-</div>
 {% endblock %}

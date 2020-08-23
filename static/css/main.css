@@ -1,21 +1,32 @@
 
 
-html, body {
-    height: 100%;
+/*html, body {*/
+/*    height: 100%;*/
+/*}*/
+
+/*html {*/
+/*    display: table;*/
+/*    margin: auto;*/
+/*}*/
+/*body{*/
+/*    margin: auto;*/
+/*    font-family: sans-serif;*/
+/*    display: table-cell;*/
+/*    vertical-align: top;*/
+/*}*/
+
+#title {
+    text-align: center;
 }
 
-html {
-    display: table;
+#search-form {
     margin: auto;
-}
-body{
-    margin: auto;
-    font-family: sans-serif;
-     display: table-cell;
-     vertical-align: top;
+    display: flex;
+    justify-content: center;
 }
 
 table,th,td{
+    margin: auto;
     text-align: center;
     border: 1px solid black;
     padding: 5px;
