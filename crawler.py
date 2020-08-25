@@ -8,25 +8,39 @@ from bs4 import BeautifulSoup
 from nltk.stem.wordnet import WordNetLemmatizer
 from mongodb import MongoDB
 
+import os
+from dotenv import load_dotenv
+
 
 class Crawler:
 
-    def __init__(self, startingUrl: str, mongo_connection: MongoDB, append: bool, size: int,
+    def connect_to_db(self):
+        load_dotenv()  # load enviromental variables from .env
+        username = os.getenv("MONGO_INITDB_ROOT_USERNAME")
+        password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
+        database = os.getenv("MONGO_INITDB_DATABASE")
+        ip = os.getenv("MONGO_IP")
+        return MongoDB(username=username, password=password, database=database,
+                                        ip=ip)  # connecting to mongo
+
+    def __init__(self, starting_url: str, append: bool, size: int,
                  threads_num: int):
         print("Downloading natural language packages...")
         nltk.download('punkt')
         nltk.download('stopwords')
         nltk.download('wordnet')
+
         self.stop_words = set(nltk.corpus.stopwords.words("english"))
         self.global_counter = 0
-        self.head = [startingUrl]
+        self.head = [starting_url]
         self.headLocker, self.count_locker = threading.Lock(), threading.Lock()
         self.threads = []
         self.size = size
-        self.numberOfThreads = threads_num
-        self.mongo_connection = mongo_connection
+        self.threads_num = threads_num
+
+        self.mongo_connection = self.connect_to_db()
         if not append:
-            mongo_connection.reset_crawler()
+            self.mongo_connection.reset_crawler()
 
     def crawl(self):
         print("Start crawling...")
@@ -38,7 +52,7 @@ class Crawler:
             if len(self.head) == 0:
                 break
             next_url = str(self.head.pop(0))
-            t = threading.Thread(target=self.parseUrl, args=(next_url))
+            t = threading.Thread(target=self.parse_url, args=(next_url))
             t.start()
             self.threads.append(t)
             while True:  # it will stay here till a thread is available
@@ -46,13 +60,13 @@ class Crawler:
                 for thread in self.threads:
                     if thread.isAlive():
                         active += 1
-                if active < self.numberOfThreads:
+                if active < self.threads_num:
                     break
                 else:
                     time.sleep(0.5)
         print("Crawling finished!")
 
-    def parseUrl(self, *url_chars):
+    def parse_url(self, *url_chars):
         url = "".join(url_chars)
         try:  # check if reference is valid
             html = request.urlopen(url).read().decode('utf8')

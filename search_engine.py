@@ -20,7 +20,7 @@ class SearchEngine:
         password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
         database = os.getenv("MONGO_INITDB_DATABASE")
         ip = os.getenv("MONGO_IP")
-        mongo_connection = MongoDB(username=username, password=password, database=database,
+        self.mongo_connection = MongoDB(username=username, password=password, database=database,
                                    ip=ip)  # connecting to mongo
 
         starting_url = str(sys.argv[1])  # get variables from commandline
@@ -28,12 +28,12 @@ class SearchEngine:
         will_append = int(sys.argv[3])
         threads = int(sys.argv[4])
         if will_append == 0:
-            self.crawler = Crawler(startingUrl=starting_url, mongo_connection=mongo_connection, append=False, size=size,
+            self.crawler = Crawler(starting_url=starting_url, append=False, size=size,
                                    threads_num=threads)
         else:
-            self.crawler = Crawler(startingUrl=starting_url, mongo_connection=mongo_connection, append=True, size=size,
+            self.crawler = Crawler(starting_url=starting_url, append=True, size=size,
                                    threads_num=threads)
         self.crawler.crawl()
 
-        self.indexer = Indexer(mongo_connection)
-        self.query_handler = QueryHandler(mongo_connection)
+        self.indexer = Indexer(self.mongo_connection)
+        self.query_handler = QueryHandler(self.mongo_connection)

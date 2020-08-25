@@ -44,8 +44,6 @@ class QueryHandler:
             if k == top_k:
                 break
 
-        return query_results
-
         # test only!
         print("*** DOCS SCORE *** \n")
         for res in self.docs_score.keys():
@@ -54,3 +52,6 @@ class QueryHandler:
         print("\n*** Query Results for top-k: ***\n")
         for res in query_results:
             print(res, "\n")
+
+        return query_results
+
