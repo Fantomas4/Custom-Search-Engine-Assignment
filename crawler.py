@@ -6,13 +6,13 @@ from urllib import request
 import nltk
 from bs4 import BeautifulSoup
 from nltk.stem.wordnet import WordNetLemmatizer
-from connect_to_mongo import ConnectToMongo
+from mongodb import MongoDB
 
 
 class Crawler:
 
-    def __init__(self, startingUrl: str, mongo_connection: ConnectToMongo, append: bool, size: int,
-                 numberOfThreads: int):
+    def __init__(self, startingUrl: str, mongo_connection: MongoDB, append: bool, size: int,
+                 threads_num: int):
         print("Downloading natural language packages...")
         nltk.download('punkt')
         nltk.download('stopwords')
@@ -23,7 +23,7 @@ class Crawler:
         self.headLocker, self.count_locker = threading.Lock(), threading.Lock()
         self.threads = []
         self.size = size
-        self.numberOfThreads = numberOfThreads
+        self.numberOfThreads = threads_num
         self.mongo_connection = mongo_connection
         if not append:
             mongo_connection.reset_crawler()

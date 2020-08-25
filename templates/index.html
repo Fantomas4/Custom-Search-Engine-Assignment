@@ -7,8 +7,13 @@
 {% block body %}
 <h1 id="title">Better than Google</h1>
 <form id="search-form" action="/" method="POST">
-    <input type="text" name="query" id="query">
+    <div>
+        <input type="text" name="query" id="query">
     <input type="submit" value="Submit Query">
+    </div>
+    <div id="top-k-container">
+        Show top <input id="top-k-input" type="number" value="5" name="top-k"> results
+    </div>
 </form>
 <br>
 

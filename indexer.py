@@ -1,12 +1,12 @@
 import math
 import time
 
-from connect_to_mongo import ConnectToMongo
+from mongodb import MongoDB
 
 
 class Indexer:
 
-    def __init__(self, mongo_connection: ConnectToMongo):
+    def __init__(self, mongo_connection: MongoDB):
         self.docs_count = 0
         self.doc_lengths = {}
 
