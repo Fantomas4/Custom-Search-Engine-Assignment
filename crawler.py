@@ -25,7 +25,7 @@ class Crawler:
 
     def __init__(self, starting_url: str, append: bool, size: int,
                  threads_num: int):
-        print("Downloading natural language packages...")
+        print("> Downloading natural language packages...")
         nltk.download('punkt')
         nltk.download('stopwords')
         nltk.download('wordnet')
@@ -43,7 +43,7 @@ class Crawler:
             self.mongo_connection.reset_crawler()
 
     def crawl(self):
-        print("Start crawling...")
+        print("> Started crawling...")
         while self.global_counter < self.size:
             while len(self.head) == 0 and sum(
                     [1 for t in self.threads if t.is_alive()]) > 0:  # there are not avaliable references
@@ -64,7 +64,7 @@ class Crawler:
                     break
                 else:
                     time.sleep(0.5)
-        print("Crawling finished!")
+        print("> Crawling finished!")
 
     def parse_url(self, *url_chars):
         url = "".join(url_chars)
@@ -85,19 +85,19 @@ class Crawler:
             # Preprocess the raw text
             rx = re.compile("[^\W\d_]+")  # regex for words
             tokens = nltk.word_tokenize(raw.get_text())
-            allWords = [word for word in tokens if word not in '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~']
-            allWords = [i[0] for i in [rx.findall(i) for i in list(allWords)] if len(i) > 0]
-            allWords = [i for i in list(allWords) if not i.startswith("wg")]
-            # remove the stop words in the allWords
-            filteredWords = []
-            for w in allWords:
+            all_words = [word for word in tokens if word not in '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~']
+            all_words = [i[0] for i in [rx.findall(i) for i in list(all_words)] if len(i) > 0]
+            all_words = [i for i in list(all_words) if not i.startswith("wg")]
+            # remove the stop words in the all_words
+            filtered_words = []
+            for w in all_words:
                 if w not in self.stop_words:
-                    filteredWords.append(w)
+                    filtered_words.append(w)
             lem = WordNetLemmatizer()  # Lemmatization all words to the root word
-            lemmedWords = [lem.lemmatize(word) for word in filteredWords]
+            lemmed_words = [lem.lemmatize(word) for word in filtered_words]
             with self.count_locker:  # here will be saved to mongo and increase global counter
                 if self.global_counter < self.size:
-                    self.mongo_connection.add_crawler_record({"url": url, "title": title, "bag": Counter(lemmedWords)})
+                    self.mongo_connection.add_crawler_record({"url": url, "title": title, "bag": Counter(lemmed_words)})
                     self.global_counter += 1
         except Exception:  # something went wrong during this phase, so we will not have any results
             return

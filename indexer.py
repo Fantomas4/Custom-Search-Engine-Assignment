@@ -15,6 +15,8 @@ class Indexer:
         self.build_index()
 
     def build_index(self):
+        print("> Building index...")
+
         tic = time.perf_counter()
 
         # Reset index related database collections
@@ -44,7 +46,8 @@ class Indexer:
                                                                     })
                 else:
                     # If the word does not exist in the index, create a new entry for it
-                    self.mongo_connection.add_index_entry({"word": word,
+                    # ATTENTION: word must be converted to LOWERCASE for the purposes of querying.
+                    self.mongo_connection.add_index_entry({"word": word.lower(),
                                                            "w_freq": 1,
                                                            "documents": [{"_id": doc_id,
                                                                           "title": title,
@@ -58,6 +61,7 @@ class Indexer:
 
         toc = time.perf_counter()
         print("Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
+        print("> Index Building complete!")
 
     # Given a document id, searches for the word-document frequency on a given term's document list.
     def search_w_d_freq(self, doc_id, doc_list):

@@ -34,6 +34,13 @@
     width: 50px;
 }
 
+#no-results-text {
+    margin-top: 40px;
+    text-align: center;
+    font-size: x-large;
+    font-style: italic;
+}
+
 table,th,td{
     margin: auto;
     text-align: center;
