@@ -1,7 +1,7 @@
 from pymongo import MongoClient
 
 
-class ConnectToMongo:
+class MongoDB:
 
     def __init__(self, username, password, ip, database):
         self.database = database
