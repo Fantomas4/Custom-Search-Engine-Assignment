@@ -17,11 +17,11 @@
 </form>
 <br>
 
-{% if webpages|length < 1 %}
+{% if submitted and webpages|length == 0 %}
     <div id="no-results-text">
         No results found :/
     </div>
-{% else %}
+{% elif submitted and webpages|length > 0 %}
 <table>
     <tr>
         <th>Title</th>

@@ -12,8 +12,6 @@ class Indexer:
 
         self.mongo_connection = mongo_connection
 
-        self.build_index()
-
     def build_index(self):
         print("> Building index...")
 

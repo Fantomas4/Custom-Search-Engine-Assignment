@@ -6,9 +6,12 @@ from urllib import request
 import nltk
 from bs4 import BeautifulSoup
 from nltk.stem.wordnet import WordNetLemmatizer
+
+from indexer import Indexer
 from mongodb import MongoDB
 
 import os
+import sys
 from dotenv import load_dotenv
 
 
@@ -20,11 +23,11 @@ class Crawler:
         password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
         database = os.getenv("MONGO_INITDB_DATABASE")
         ip = os.getenv("MONGO_IP")
-        return MongoDB(username=username, password=password, database=database,
-                                        ip=ip)  # connecting to mongo
 
-    def __init__(self, starting_url: str, append: bool, size: int,
-                 threads_num: int):
+        # return MongoDB connection object
+        return MongoDB(username=username, password=password, database=database, ip=ip)
+
+    def __init__(self, starting_url: str, append: bool, size: int, threads_num: int):
         print("> Downloading natural language packages...")
         nltk.download('punkt')
         nltk.download('stopwords')
@@ -41,6 +44,8 @@ class Crawler:
         self.mongo_connection = self.connect_to_db()
         if not append:
             self.mongo_connection.reset_crawler()
+
+        self.indexer = Indexer(self.mongo_connection)
 
     def crawl(self):
         print("> Started crawling...")
@@ -66,6 +71,9 @@ class Crawler:
                     time.sleep(0.5)
         print("> Crawling finished!")
 
+        # Call Indexer to build index
+        self.indexer.build_index()
+
     def parse_url(self, *url_chars):
         url = "".join(url_chars)
         try:  # check if reference is valid
@@ -77,11 +85,11 @@ class Crawler:
         except Exception:
             return
         try:
-            newReferences = []
+            new_references = []
             for link in raw.findAll('a'):  # find the references from this page
-                newReferences.append(link.get('href'))
+                new_references.append(link.get('href'))
             with self.headLocker:  # add the references to the head
-                self.head += newReferences
+                self.head += new_references
             # Preprocess the raw text
             rx = re.compile("[^\W\d_]+")  # regex for words
             tokens = nltk.word_tokenize(raw.get_text())
@@ -101,3 +109,16 @@ class Crawler:
                     self.global_counter += 1
         except Exception:  # something went wrong during this phase, so we will not have any results
             return
+
+
+if __name__ == "__main__":
+    starting_url = str(sys.argv[1])  # get variables from commandline
+    size = int(sys.argv[2])
+    will_append = int(sys.argv[3])
+    threads = int(sys.argv[4])
+    if will_append == 0:
+        crawler = Crawler(starting_url=starting_url, append=False, size=size, threads_num=threads)
+    else:
+        crawler = Crawler(starting_url=starting_url, append=True, size=size, threads_num=threads)
+
+    crawler.crawl()
