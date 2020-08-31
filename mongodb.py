@@ -31,10 +31,8 @@ class MongoDB:
     def find_all_document_records(self):
         return self.documents_db.find({})
 
-    def add_lengths_to_document_db(self, doc_lengths):
-        print("DIAG: doc_lengths.keys(): ", doc_lengths.keys())
-        for doc_id in doc_lengths.keys():
-            self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_lengths[doc_id]}})
+    def add_length_to_document(self, doc_id, doc_length):
+        self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_length}})
 
     def add_index_entry(self, json):
         self.indexer_db.insert_one(json)

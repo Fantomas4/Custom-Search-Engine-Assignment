@@ -47,6 +47,10 @@ class Indexer:
             new_task.start()
             self.thread_pool.append(new_task)
 
+        # Wait until all threads in the thread poll have finished
+        for thread in self.thread_pool:
+            if thread.isAlive():
+                time.sleep(0.5)
 
         # Calculate the document lengths of the given document collection, and store them as a new property
         # of each document record.
@@ -92,41 +96,57 @@ class Indexer:
         return 0
 
     def calculate_doc_lengths(self):
+        # Reset thread pool
+        self.thread_pool = []
+
         for document in self.mongo_connection.find_all_document_records():
-            doc_id = document["_id"]
-
-            # Initialize the score accumulator for the current document to 0
-            squared_weights_sum = 0
-
-            # Find maximum word-document frequency value to be used in normalization
-            max_w_d_freq = 1
-            for term_record in self.mongo_connection.find_all_index_entries():
-                w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
-                if w_d_freq > max_w_d_freq:
-                    max_w_d_freq = w_d_freq
-
-            print("DIAG: max_w_d_freq is: ", max_w_d_freq)
-
-            for term_record in self.mongo_connection.find_all_index_entries():
-                w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
-                w_freq = term_record["w_freq"]
-
-                norm_w_d_freq = w_d_freq / max_w_d_freq
-                if self.docs_count > 1:
-                    norm_inv_d_freq = math.log(self.docs_count / w_freq) / math.log(self.docs_count)
+            # Wait until thread pool has an available thread
+            while True:
+                active = 0
+                for thread in self.thread_pool:
+                    if thread.isAlive():
+                        active += 1
+                if active < self.threads_num:
+                    break
                 else:
-                    # If the document collections consists of just 1 document, set inverted document frequency
-                    # variable to 1 (thus ignoring inverted document frequency scoring)
-                    norm_inv_d_freq = 1
+                    time.sleep(0.5)
 
-                squared_weights_sum += math.pow(norm_w_d_freq * norm_inv_d_freq, 2)
+            new_task = threading.Thread(target=self.calculate_doc_length, args=(document, ))
+            new_task.start()
+            self.thread_pool.append(new_task)
 
-            # Calculate current document's length and add the document:length pair to the doc_lengths dictionary.
-            doc_len = math.sqrt(squared_weights_sum)
-            print("DIAG: doc_len is: ", doc_len)
-            self.doc_lengths[doc_id] = doc_len
+    def calculate_doc_length(self, document):
+        doc_id = document["_id"]
 
-        # Add calculated lengths to the corresponding document records.
-        self.mongo_connection.add_lengths_to_document_db(self.doc_lengths)
+        # Initialize the score accumulator for the current document to 0
+        squared_weights_sum = 0
 
+        # Find maximum word-document frequency value to be used in normalization
+        max_w_d_freq = 1
+        for term_record in self.mongo_connection.find_all_index_entries():
+            w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
+            if w_d_freq > max_w_d_freq:
+                max_w_d_freq = w_d_freq
+
+        print("DIAG: max_w_d_freq is: ", max_w_d_freq)
+
+        for term_record in self.mongo_connection.find_all_index_entries():
+            w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
+            w_freq = term_record["w_freq"]
+
+            norm_w_d_freq = w_d_freq / max_w_d_freq
+            if self.docs_count > 1:
+                norm_inv_d_freq = math.log(self.docs_count / w_freq) / math.log(self.docs_count)
+            else:
+                # If the document collections consists of just 1 document, set inverted document frequency
+                # variable to 1 (thus ignoring inverted document frequency scoring)
+                norm_inv_d_freq = 1
+
+            squared_weights_sum += math.pow(norm_w_d_freq * norm_inv_d_freq, 2)
+
+        # Calculate current document's length and add the document:length pair to the doc_lengths dictionary.
+        doc_len = math.sqrt(squared_weights_sum)
+        print("DIAG: doc_len is: ", doc_len)
+
+        self.mongo_connection.add_length_to_document(doc_id, doc_len)
 
