@@ -45,13 +45,13 @@ class Crawler:
         if not append:
             self.mongo_connection.reset_crawler()
 
-        self.indexer = Indexer(self.mongo_connection)
+        self.indexer = Indexer(self.mongo_connection, self.threads_num)
 
     def crawl(self):
         print("> Started crawling...")
         while self.global_counter < self.size:
-            while len(self.head) == 0 and sum(
-                    [1 for t in self.threads if t.is_alive()]) > 0:  # there are not avaliable references
+            # Wait while here are no available references
+            while len(self.head) == 0 and sum([1 for t in self.threads if t.is_alive()]) > 0:
                 time.sleep(1)
                 continue
             if len(self.head) == 0:
