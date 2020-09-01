@@ -49,7 +49,7 @@ class Indexer:
 
         # Wait until all threads in the thread poll have finished
         for thread in self.thread_pool:
-            if thread.isAlive():
+            while thread.isAlive():
                 time.sleep(0.5)
 
         # Calculate the document lengths of the given document collection, and store them as a new property
