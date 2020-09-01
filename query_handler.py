@@ -1,5 +1,7 @@
 import math
 import os
+import time
+
 from dotenv import load_dotenv
 from mongodb import MongoDB
 
@@ -16,12 +18,14 @@ class QueryHandler:
         # return MongoDB connection object
         return MongoDB(username=username, password=password, database=database, ip=ip)
 
-    def __init__(self):
+    def __init__(self, threads_num):
         self.mongo_connection = self.connect_to_db()
         # self.query(["Apage", "Wikipedia", "From"], 3)
 
     def query(self, query_keywords, top_k):
         print("> Executing query...")
+        tic = time.perf_counter()
+
         docs_score = {}
         docs_count = self.mongo_connection.get_documents_count()
 
@@ -77,6 +81,7 @@ class QueryHandler:
         for res in query_results:
             print(res, "\n")
 
+        toc = time.perf_counter()
+        print("Query execution time: " + "{:.2f}".format(toc - tic) + " secs")
         print("> Query execution finished!")
         return query_results
-

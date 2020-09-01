@@ -22,7 +22,8 @@ def index():
 
 if __name__ == "__main__":
     print("> Initializing Query Handler...")
-    query_handler = QueryHandler()
+    # TODO: add query handler number of threads execution argument
+    query_handler = QueryHandler(4)
 
     print("> Launching Server...")
     flask.run(debug=True, use_reloader=False)
