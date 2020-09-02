@@ -42,7 +42,9 @@
 }
 
 table,th,td{
-    margin: auto;
+    margin-top: 20px;
+    margin-left: 25%;
+    margin-right: 25%;
     text-align: center;
     border: 1px solid black;
     padding: 5px;

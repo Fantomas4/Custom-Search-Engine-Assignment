@@ -1,3 +1,5 @@
+import sys
+
 from flask import Flask, render_template, request, redirect
 from query_handler import QueryHandler
 
@@ -22,8 +24,7 @@ def index():
 
 if __name__ == "__main__":
     print("> Initializing Query Handler...")
-    # TODO: add query handler number of threads execution argument
-    query_handler = QueryHandler(4)
+    query_handler = QueryHandler(int(sys.argv[1]))
 
     print("> Launching Server...")
     flask.run(debug=True, use_reloader=False)

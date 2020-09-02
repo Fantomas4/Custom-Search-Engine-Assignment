@@ -32,20 +32,21 @@ class Indexer:
         print("DIAG: docs_count: ", self.docs_count)
 
         for document in self.mongo_connection.find_all_document_records():
-            # Wait until thread pool has an available thread
-            while True:
-                active = 0
-                for thread in self.thread_pool:
-                    if thread.isAlive():
-                        active += 1
-                if active < self.threads_num:
-                    break
-                else:
-                    time.sleep(0.5)
+            bag = document["bag"]
+            for word in bag:
+                while True:  # it will stay here till a thread is available
+                    active = 0
+                    for thread in self.thread_pool:
+                        if thread.isAlive():
+                            active += 1
+                    if active < self.threads_num:
+                        break
+                    else:
+                        time.sleep(0.5)
 
-            new_task = threading.Thread(target=self.process_document, args=(document, ))
-            new_task.start()
-            self.thread_pool.append(new_task)
+                new_task = threading.Thread(target=self.process_word, args=(document, word, ))
+                new_task.start()
+                self.thread_pool.append(new_task)
 
         # Wait until all threads in the thread poll have finished
         for thread in self.thread_pool:
@@ -57,34 +58,33 @@ class Indexer:
         self.calculate_doc_lengths()
 
         toc = time.perf_counter()
-        print("Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
+        print("> Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
         print("> Index Building complete!")
 
-    def process_document(self, document):
+    def process_word(self, document, word):
         doc_id = document["_id"]
         url = document["url"]
         title = document["title"]
         bag = document["bag"]
 
-        for word in bag:
-            # Check if the word already exists in the inverted index
-            if self.mongo_connection.index_entry_exists(word):
-                # If the word exists in the index, update the word entry's data
-                self.mongo_connection.update_index_entry(word, {"_id": doc_id,
-                                                                "title": title,
-                                                                "url": url,
-                                                                "w_d_freq": bag[word]
-                                                                })
-            else:
-                # If the word does not exist in the index, create a new entry for it
-                # ATTENTION: word must be converted to LOWERCASE for the purposes of querying.
-                self.mongo_connection.add_index_entry({"word": word.lower(),
-                                                       "w_freq": 1,
-                                                       "documents": [{"_id": doc_id,
-                                                                      "title": title,
-                                                                      "url": url,
-                                                                      "w_d_freq": bag[word]}]
-                                                       })
+        # Check if the word already exists in the inverted index
+        if self.mongo_connection.index_entry_exists(word):
+            # If the word exists in the index, update the word entry's data
+            self.mongo_connection.update_index_entry(word, {"_id": doc_id,
+                                                            "title": title,
+                                                            "url": url,
+                                                            "w_d_freq": bag[word]
+                                                            })
+        else:
+            # If the word does not exist in the index, create a new entry for it
+            # ATTENTION: word must be converted to LOWERCASE for the purposes of querying.
+            self.mongo_connection.add_index_entry({"word": word.lower(),
+                                                   "w_freq": 1,
+                                                   "documents": [{"_id": doc_id,
+                                                                  "title": title,
+                                                                  "url": url,
+                                                                  "w_d_freq": bag[word]}]
+                                                   })
 
     # Given a document id, searches for the word-document frequency on a given term's document list.
     def search_w_d_freq(self, doc_id, doc_list):
