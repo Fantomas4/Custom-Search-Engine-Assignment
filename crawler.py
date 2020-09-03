@@ -17,16 +17,6 @@ from dotenv import load_dotenv
 
 class Crawler:
 
-    def connect_to_db(self):
-        load_dotenv()  # load enviromental variables from .env
-        username = os.getenv("MONGO_INITDB_ROOT_USERNAME")
-        password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
-        database = os.getenv("MONGO_INITDB_DATABASE")
-        ip = os.getenv("MONGO_IP")
-
-        # return MongoDB connection object
-        return MongoDB(username=username, password=password, database=database, ip=ip)
-
     def __init__(self, starting_url: str, append: bool, size: int, threads_num: int):
         print("> Downloading natural language packages...")
         nltk.download('punkt')
@@ -41,11 +31,11 @@ class Crawler:
         self.size = size
         self.threads_num = threads_num
 
-        self.mongo_connection = self.connect_to_db()
+        self.mongo_connection = MongoDB.connect_to_db()
         if not append:
             self.mongo_connection.reset_crawler()
 
-        self.indexer = Indexer(self.mongo_connection, self.threads_num)
+        self.indexer = Indexer(self.threads_num)
 
     def crawl(self):
         print("> Started crawling...")

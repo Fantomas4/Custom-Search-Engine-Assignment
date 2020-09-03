@@ -1,4 +1,3 @@
-import math
 import threading
 import time
 
@@ -7,11 +6,11 @@ from mongodb import MongoDB
 
 class Indexer:
 
-    def __init__(self, mongo_connection: MongoDB, threads_num=4):
+    def __init__(self, threads_num=4):
         self.docs_count = 0
         self.doc_lengths = {}
 
-        self.mongo_connection = mongo_connection
+        self.mongo_connection = MongoDB.connect_to_db()
         self.threads_num = threads_num
 
         self.thread_pool = []

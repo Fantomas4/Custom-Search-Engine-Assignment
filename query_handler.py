@@ -1,28 +1,16 @@
 import math
-import os
 import threading
 import time
 
-from dotenv import load_dotenv
 from mongodb import MongoDB
 
 
 class QueryHandler:
 
-    def connect_to_db(self):
-        load_dotenv()  # load enviromental variables from .env
-        username = os.getenv("MONGO_INITDB_ROOT_USERNAME")
-        password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
-        database = os.getenv("MONGO_INITDB_DATABASE")
-        ip = os.getenv("MONGO_IP")
-
-        # return MongoDB connection object
-        return MongoDB(username=username, password=password, database=database, ip=ip)
-
     def __init__(self, threads_num):
         self.threads_num = threads_num
         self.thread_pool = []
-        self.mongo_connection = self.connect_to_db()
+        self.mongo_connection = MongoDB.connect_to_db()
 
         self.docs_count = 0
         self.docs_score = {}

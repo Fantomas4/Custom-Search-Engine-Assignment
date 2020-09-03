@@ -1,5 +1,6 @@
 from pymongo import MongoClient
-
+from dotenv import load_dotenv
+import os
 
 class MongoDB:
 
@@ -11,6 +12,17 @@ class MongoDB:
         self.indexer_db = self.client.index
         self.query_documents_db = self.client.query_documents
         self.query_indexer_db = self.client.query_index
+
+    @staticmethod
+    def connect_to_db():
+        load_dotenv()  # load enviromental variables from .env
+        username = os.getenv("MONGO_INITDB_ROOT_USERNAME")
+        password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
+        database = os.getenv("MONGO_INITDB_DATABASE")
+        ip = os.getenv("MONGO_IP")
+
+        # return MongoDB connection object
+        return MongoDB(username=username, password=password, database=database, ip=ip)
 
     # ------------------------------------ Crawler-related methods ------------------------------------
     def add_crawler_record(self, json):
