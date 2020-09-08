@@ -1,4 +1,3 @@
-import math
 import threading
 import time
 
@@ -7,11 +6,11 @@ from mongodb import MongoDB
 
 class Indexer:
 
-    def __init__(self, mongo_connection: MongoDB, threads_num=4):
+    def __init__(self, threads_num=4):
         self.docs_count = 0
         self.doc_lengths = {}
 
-        self.mongo_connection = mongo_connection
+        self.mongo_connection = MongoDB.connect_to_db()
         self.threads_num = threads_num
 
         self.thread_pool = []
@@ -32,101 +31,53 @@ class Indexer:
         print("DIAG: docs_count: ", self.docs_count)
 
         for document in self.mongo_connection.find_all_document_records():
-            # Wait until thread pool has an available thread
-            while True:
-                active = 0
-                for thread in self.thread_pool:
-                    if thread.isAlive():
-                        active += 1
-                if active < self.threads_num:
-                    break
-                else:
-                    time.sleep(0.5)
+            bag = document["bag"]
+            for word in bag:
+                while True:  # it will stay here till a thread is available
+                    active = 0
+                    for thread in self.thread_pool:
+                        if thread.isAlive():
+                            active += 1
+                    if active < self.threads_num:
+                        break
+                    else:
+                        time.sleep(0.5)
 
-            new_task = threading.Thread(target=self.process_document, args=(document, ))
-            new_task.start()
-            self.thread_pool.append(new_task)
+                new_task = threading.Thread(target=self.process_word, args=(document, word, ))
+                new_task.start()
+                self.thread_pool.append(new_task)
 
-
-        # Calculate the document lengths of the given document collection, and store them as a new property
-        # of each document record.
-        self.calculate_doc_lengths()
+        # Wait until all threads in the thread poll have finished
+        for thread in self.thread_pool:
+            while thread.isAlive():
+                time.sleep(0.5)
 
         toc = time.perf_counter()
-        print("Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
+        print("> Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
         print("> Index Building complete!")
 
-    def process_document(self, document):
+    def process_word(self, document, word):
         doc_id = document["_id"]
         url = document["url"]
         title = document["title"]
         bag = document["bag"]
 
-        for word in bag:
-            # Check if the word already exists in the inverted index
-            if self.mongo_connection.index_entry_exists(word):
-                # If the word exists in the index, update the word entry's data
-                self.mongo_connection.update_index_entry(word, {"_id": doc_id,
-                                                                "title": title,
-                                                                "url": url,
-                                                                "w_d_freq": bag[word]
-                                                                })
-            else:
-                # If the word does not exist in the index, create a new entry for it
-                # ATTENTION: word must be converted to LOWERCASE for the purposes of querying.
-                self.mongo_connection.add_index_entry({"word": word.lower(),
-                                                       "w_freq": 1,
-                                                       "documents": [{"_id": doc_id,
-                                                                      "title": title,
-                                                                      "url": url,
-                                                                      "w_d_freq": bag[word]}]
-                                                       })
-
-    # Given a document id, searches for the word-document frequency on a given term's document list.
-    def search_w_d_freq(self, doc_id, doc_list):
-        for document in doc_list:
-            if document["_id"] == doc_id:
-                return document["w_d_freq"]
-        # If no w_d_freq data was found, the document is not present in the target term's
-        # document list, so we return 0.
-        return 0
-
-    def calculate_doc_lengths(self):
-        for document in self.mongo_connection.find_all_document_records():
-            doc_id = document["_id"]
-
-            # Initialize the score accumulator for the current document to 0
-            squared_weights_sum = 0
-
-            # Find maximum word-document frequency value to be used in normalization
-            max_w_d_freq = 1
-            for term_record in self.mongo_connection.find_all_index_entries():
-                w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
-                if w_d_freq > max_w_d_freq:
-                    max_w_d_freq = w_d_freq
-
-            print("DIAG: max_w_d_freq is: ", max_w_d_freq)
-
-            for term_record in self.mongo_connection.find_all_index_entries():
-                w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
-                w_freq = term_record["w_freq"]
-
-                norm_w_d_freq = w_d_freq / max_w_d_freq
-                if self.docs_count > 1:
-                    norm_inv_d_freq = math.log(self.docs_count / w_freq) / math.log(self.docs_count)
-                else:
-                    # If the document collections consists of just 1 document, set inverted document frequency
-                    # variable to 1 (thus ignoring inverted document frequency scoring)
-                    norm_inv_d_freq = 1
-
-                squared_weights_sum += math.pow(norm_w_d_freq * norm_inv_d_freq, 2)
-
-            # Calculate current document's length and add the document:length pair to the doc_lengths dictionary.
-            doc_len = math.sqrt(squared_weights_sum)
-            print("DIAG: doc_len is: ", doc_len)
-            self.doc_lengths[doc_id] = doc_len
-
-        # Add calculated lengths to the corresponding document records.
-        self.mongo_connection.add_lengths_to_document_db(self.doc_lengths)
-
+        # Check if the word already exists in the inverted index
+        if self.mongo_connection.index_entry_exists(word):
+            # If the word exists in the index, update the word entry's data
+            self.mongo_connection.update_index_entry(word, {"_id": doc_id,
+                                                            "title": title,
+                                                            "url": url,
+                                                            "w_d_freq": bag[word]
+                                                            })
+        else:
+            # If the word does not exist in the index, create a new entry for it
+            # ATTENTION: word must be converted to LOWERCASE for the purposes of querying.
+            self.mongo_connection.add_index_entry({"word": word.lower(),
+                                                   "w_freq": 1,
+                                                   "documents": [{"_id": doc_id,
+                                                                  "title": title,
+                                                                  "url": url,
+                                                                  "w_d_freq": bag[word]}]
+                                                   })
 

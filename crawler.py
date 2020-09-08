@@ -17,16 +17,6 @@ from dotenv import load_dotenv
 
 class Crawler:
 
-    def connect_to_db(self):
-        load_dotenv()  # load enviromental variables from .env
-        username = os.getenv("MONGO_INITDB_ROOT_USERNAME")
-        password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
-        database = os.getenv("MONGO_INITDB_DATABASE")
-        ip = os.getenv("MONGO_IP")
-
-        # return MongoDB connection object
-        return MongoDB(username=username, password=password, database=database, ip=ip)
-
     def __init__(self, starting_url: str, append: bool, size: int, threads_num: int):
         print("> Downloading natural language packages...")
         nltk.download('punkt')
@@ -41,14 +31,16 @@ class Crawler:
         self.size = size
         self.threads_num = threads_num
 
-        self.mongo_connection = self.connect_to_db()
+        self.mongo_connection = MongoDB.connect_to_db()
         if not append:
             self.mongo_connection.reset_crawler()
 
-        self.indexer = Indexer(self.mongo_connection, self.threads_num)
+        self.indexer = Indexer(self.threads_num)
 
     def crawl(self):
         print("> Started crawling...")
+        tic = time.perf_counter()
+
         while self.global_counter < self.size:
             # Wait while here are no available references
             while len(self.head) == 0 and sum([1 for t in self.threads if t.is_alive()]) > 0:
@@ -69,6 +61,9 @@ class Crawler:
                     break
                 else:
                     time.sleep(0.5)
+
+        toc = time.perf_counter()
+        print("> Crawler execution time: " + "{:.2f}".format(toc - tic) + " secs")
         print("> Crawling finished!")
 
         # Call Indexer to build index
@@ -103,9 +98,10 @@ class Crawler:
                     filtered_words.append(w)
             lem = WordNetLemmatizer()  # Lemmatization all words to the root word
             lemmed_words = [lem.lemmatize(word) for word in filtered_words]
+            lowercase_words = [word.lower() for word in lemmed_words]  # Convert all words to lowercase
             with self.count_locker:  # here will be saved to mongo and increase global counter
                 if self.global_counter < self.size:
-                    self.mongo_connection.add_crawler_record({"url": url, "title": title, "bag": Counter(lemmed_words)})
+                    self.mongo_connection.add_crawler_record({"url": url, "title": title, "bag": Counter(lowercase_words)})
                     self.global_counter += 1
         except Exception:  # something went wrong during this phase, so we will not have any results
             return

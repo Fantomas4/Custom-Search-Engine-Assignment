@@ -1,5 +1,6 @@
 from pymongo import MongoClient
-
+from dotenv import load_dotenv
+import os
 
 class MongoDB:
 
@@ -9,7 +10,21 @@ class MongoDB:
         self.crawler_db = self.client.crawler_records
         self.documents_db = self.client.documents
         self.indexer_db = self.client.index
+        self.query_documents_db = self.client.query_documents
+        self.query_indexer_db = self.client.query_index
 
+    @staticmethod
+    def connect_to_db():
+        load_dotenv()  # load enviromental variables from .env
+        username = os.getenv("MONGO_INITDB_ROOT_USERNAME")
+        password = os.getenv("MONGO_INITDB_ROOT_PASSWORD")
+        database = os.getenv("MONGO_INITDB_DATABASE")
+        ip = os.getenv("MONGO_IP")
+
+        # return MongoDB connection object
+        return MongoDB(username=username, password=password, database=database, ip=ip)
+
+    # ------------------------------------ Crawler-related methods ------------------------------------
     def add_crawler_record(self, json):
         self.crawler_db.insert_one(json)
 
@@ -19,6 +34,11 @@ class MongoDB:
     def crawler_record_exists(self, title, url):
         return self.crawler_db.find_one({"title": title, "url": url}) is not None
 
+    def reset_crawler(self):
+        self.crawler_db.drop()
+        self.crawler_db = self.client.crawler_records
+
+    # ------------------------------------ Indexer-related methods ------------------------------------
     def build_documents_db(self):
         self.documents_db.insert_many(self.crawler_db.find({}))
 
@@ -30,11 +50,6 @@ class MongoDB:
 
     def find_all_document_records(self):
         return self.documents_db.find({})
-
-    def add_lengths_to_document_db(self, doc_lengths):
-        print("DIAG: doc_lengths.keys(): ", doc_lengths.keys())
-        for doc_id in doc_lengths.keys():
-            self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_lengths[doc_id]}})
 
     def add_index_entry(self, json):
         self.indexer_db.insert_one(json)
@@ -56,14 +71,41 @@ class MongoDB:
     def index_entry_exists(self, word):
         return self.indexer_db.find_one({"word": word}) is not None
 
-    def reset_crawler(self):
-        self.crawler_db.drop()
-        self.crawler_db = self.client.crawler_records
-
     def reset_index(self):
         self.indexer_db.drop()
         self.documents_db.drop()
         self.indexer_db = self.client.index
         self.documents_db = self.client.documents
+
+    # ------------------------------------ Query Handler-related methods ------------------------------------
+    def reset_query_handler(self):
+        self.query_documents_db.drop()
+        self.query_indexer_db.drop()
+        self.query_documents_db = self.client.query_documents
+        self.query_indexer_db = self.client.query_index
+
+    def build_query_documents_db(self):
+        self.query_documents_db.insert_many(self.documents_db.find({}))
+
+    def build_query_indexer_db(self):
+        self.query_indexer_db.insert_many(self.indexer_db.find({}))
+
+    def find_all_query_document_records(self):
+        return self.query_documents_db.find({})
+
+    def find_all_query_index_entries(self):
+        return self.query_indexer_db.find({})
+
+    def get_query_documents_count(self):
+        return self.query_documents_db.count()
+
+    def find_query_index_entry(self, term):
+        return self.query_indexer_db.find_one({"word": term})
+
+    def find_query_document_record(self, doc_id):
+        return self.query_documents_db.find_one({"_id": doc_id})
+
+    def add_length_to_query_document(self, doc_id, doc_length):
+        self.query_documents_db.update({"_id": doc_id}, {"$set": {"length": doc_length}})
 
 
