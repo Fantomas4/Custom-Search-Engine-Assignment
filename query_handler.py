@@ -42,11 +42,6 @@ class QueryHandler:
         # Convert all query keywords to lowercase
         query_keywords = [keyword.lower() for keyword in query_keywords]
 
-        print("--- QUERY DIAG ---START")
-        print("query_keywords: ", query_keywords)
-        print("top_k: ", top_k)
-        print("--- QUERY DIAG ---END")
-
         for word in query_keywords:
             retrieved_word = self.mongo_connection.find_query_index_entry(word)
             if retrieved_word is not None:
@@ -94,15 +89,6 @@ class QueryHandler:
 
             if k == top_k:
                 break
-
-        # test only!
-        print("*** DOCS SCORE *** \n")
-        for res in docs_score.keys():
-            print(str(res) + " : " + str(docs_score[res]), "\n")
-
-        print("\n*** Query Results for top-k: ***\n")
-        for res in query_results:
-            print(res, "\n")
 
         toc = time.perf_counter()
         print("> Query execution time: " + "{:.2f}".format(toc - tic) + " secs")
@@ -165,8 +151,6 @@ class QueryHandler:
             if w_d_freq > max_w_d_freq:
                 max_w_d_freq = w_d_freq
 
-        print("DIAG: max_w_d_freq is: ", max_w_d_freq)
-
         for term_record in self.mongo_connection.find_all_query_index_entries():
             w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
             w_freq = term_record["w_freq"]
@@ -183,7 +167,6 @@ class QueryHandler:
 
         # Calculate current document's length and add the document:length pair to the doc_lengths dictionary.
         doc_len = math.sqrt(squared_weights_sum)
-        print("DIAG: doc_len is: ", doc_len)
 
         self.mongo_connection.add_length_to_query_document(doc_id, doc_len)
 

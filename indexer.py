@@ -28,7 +28,6 @@ class Indexer:
 
         # Get the documents total count
         self.docs_count = self.mongo_connection.get_documents_count()
-        print("DIAG: docs_count: ", self.docs_count)
 
         for document in self.mongo_connection.find_all_document_records():
             bag = document["bag"]
