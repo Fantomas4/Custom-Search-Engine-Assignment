@@ -46,7 +46,6 @@ class QueryHandler:
             retrieved_word = self.mongo_connection.find_query_index_entry(word)
             if retrieved_word is not None:
                 w_freq = retrieved_word["w_freq"]
-                inv_term_d_freq = math.log(1 + (self.docs_count / w_freq))
 
                 for document in self.mongo_connection.find_query_index_entry(word)["documents"]:
                     # Wait until thread pool has an available thread
@@ -60,7 +59,7 @@ class QueryHandler:
                         else:
                             time.sleep(0.5)
 
-                    new_task = threading.Thread(target=self.calculate_doc_score, args=(document, inv_term_d_freq, ))
+                    new_task = threading.Thread(target=self.calculate_doc_score, args=(document, w_freq, ))
                     new_task.start()
                     self.thread_pool.append(new_task)
 
@@ -69,6 +68,7 @@ class QueryHandler:
             while thread.isAlive():
                 time.sleep(0.5)
 
+        # Normalize the document scores
         for doc_id in self.docs_score.keys():
             retrieved_doc = self.mongo_connection.find_query_document_record(doc_id)
             if retrieved_doc is not None:
@@ -95,7 +95,7 @@ class QueryHandler:
         print("> Query execution finished!")
         return query_results
 
-    def calculate_doc_score(self, document, inv_term_d_freq):
+    def calculate_doc_score(self, document, w_freq):
         # Check if a score accumulator exists in docs_score dictionary for the current document
         doc_id = document["_id"]
         if doc_id not in self.docs_score.keys():
@@ -104,12 +104,12 @@ class QueryHandler:
                 self.docs_score[doc_id] = 0
 
         term_freq = 1 + math.log(document["w_d_freq"])
+        inv_term_d_freq = math.log(1 + (self.docs_count / w_freq))
 
         with self.docs_score_locker:
             self.docs_score[doc_id] = self.docs_score[doc_id] + term_freq * inv_term_d_freq
 
-        # Given a document id, searches for the word-document frequency on a given term's document list.
-
+    # Given a document id, searches for the word-document frequency on a given term's document list.
     def search_w_d_freq(self, doc_id, doc_list):
         for document in doc_list:
             if document["_id"] == doc_id:
