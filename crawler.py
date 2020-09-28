@@ -6,13 +6,9 @@ from urllib import request
 import nltk
 from bs4 import BeautifulSoup
 from nltk.stem.wordnet import WordNetLemmatizer
-
 from indexer import Indexer
 from mongodb import MongoDB
-
-import os
 import sys
-from dotenv import load_dotenv
 
 
 class Crawler:
