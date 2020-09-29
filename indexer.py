@@ -56,6 +56,9 @@ class Indexer:
         # of each document record.
         self.calculate_doc_lengths()
 
+        # Update Query Handler's DB collections with the new index and document data.
+        self.mongo_connection.update_query_handler_db()
+
         toc = time.perf_counter()
         print("> Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
         print("> Index Building complete!")
