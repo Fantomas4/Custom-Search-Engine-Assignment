@@ -47,7 +47,7 @@ class QueryHandler:
             if retrieved_word is not None:
                 w_freq = retrieved_word["w_freq"]
 
-                for document in self.mongo_connection.find_query_index_entry(word)["documents"]:
+                for document in retrieved_word["documents"]:
                     # Wait until thread pool has an available thread
                     while True:
                         active = 0
