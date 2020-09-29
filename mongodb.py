@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 
+
 class MongoDB:
 
     def __init__(self, username, password, ip, database):
@@ -102,12 +103,6 @@ class MongoDB:
 
         # Copy all records from "indexer" db collection to "query_indexer" db collection.
         self.build_query_indexer_db()
-
-    def find_all_query_document_records(self):
-        return self.query_documents_db.find({})
-
-    def find_all_query_index_entries(self):
-        return self.query_indexer_db.find({})
 
     def get_query_documents_count(self):
         return self.query_documents_db.count()
