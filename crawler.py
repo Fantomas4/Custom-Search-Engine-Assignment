@@ -38,7 +38,7 @@ class Crawler:
         tic = time.perf_counter()
 
         while self.global_counter < self.size:
-            # Wait while here are no available references
+            # Wait while there are no new references
             while len(self.head) == 0 and sum([1 for t in self.threads if t.is_alive()]) > 0:
                 time.sleep(1)
                 continue
@@ -48,7 +48,7 @@ class Crawler:
             t = threading.Thread(target=self.parse_url, args=(next_url))
             t.start()
             self.threads.append(t)
-            while True:  # it will stay here till a thread is available
+            while True:  # Wait until a thread is available
                 active = 0
                 for thread in self.threads:
                     if thread.isAlive():
@@ -67,35 +67,42 @@ class Crawler:
 
     def parse_url(self, *url_chars):
         url = "".join(url_chars)
-        try:  # check if reference is valid
+        try:  # check if the reference is valid
             html = request.urlopen(url).read().decode('utf8')
             raw = BeautifulSoup(html, 'html.parser')
             title = raw.title.string
-            if self.mongo_connection.crawler_record_exists(title, url):
-                return
         except Exception:
             return
+
         try:
             new_references = []
-            for link in raw.findAll('a'):  # find the references from this page
+            for link in raw.findAll('a'):  # Find all new references to other pages (urls) from this page
                 new_references.append(link.get('href'))
-            with self.headLocker:  # add the references to the head
+            with self.headLocker:  # Add the references to the head
                 self.head += new_references
+
+            # If a record with the same page title and url already exists in MongoDB,
+            # skip parsing this page's contents.
+            if self.mongo_connection.crawler_record_exists(title, url):
+                return
+
             # Preprocess the raw text
             rx = re.compile("[^\W\d_]+")  # regex for words
             tokens = nltk.word_tokenize(raw.get_text())
             all_words = [word for word in tokens if word not in '!"#$%&\'()*+,-./:;<=>?@[\\]^_`{|}~']
             all_words = [i[0] for i in [rx.findall(i) for i in list(all_words)] if len(i) > 0]
             all_words = [i for i in list(all_words) if not i.startswith("wg")]
-            # remove the stop words in the all_words
+
+            # Remove the stop words from all_words
             filtered_words = []
             for w in all_words:
                 if w not in self.stop_words:
                     filtered_words.append(w)
-            lem = WordNetLemmatizer()  # Lemmatization all words to the root word
+            lem = WordNetLemmatizer()  # Lemmatize all words to their root
             lemmed_words = [lem.lemmatize(word) for word in filtered_words]
             lowercase_words = [word.lower() for word in lemmed_words]  # Convert all words to lowercase
-            with self.count_locker:  # here will be saved to mongo and increase global counter
+
+            with self.count_locker:  # Save the page information to the Database as a new document
                 if self.global_counter < self.size:
                     self.mongo_connection.add_crawler_record({"url": url, "title": title, "bag": Counter(lowercase_words)})
                     self.global_counter += 1

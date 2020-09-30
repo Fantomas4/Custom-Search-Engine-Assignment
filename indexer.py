@@ -61,12 +61,17 @@ class Indexer:
             while thread.isAlive():
                 time.sleep(0.5)
 
-        # Update Query Handler's DB collections with the new index and document data.
-        self.mongo_connection.update_query_handler_db()
-
         toc = time.perf_counter()
         print("> Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
         print("> Index Building complete!")
+
+        # Update Query Handler's DB collections with the new index and document data.
+        print("> Updating Query Handler DB collections...")
+        self.mongo_connection.update_query_handler_db()
+        print("> Query Handler DB collections update complete!")
+
+
+
 
     def process_word(self, document, word):
         doc_id = document["_id"]
