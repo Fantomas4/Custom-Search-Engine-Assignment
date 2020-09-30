@@ -56,6 +56,11 @@ class Indexer:
         # of each document record.
         self.calculate_doc_lengths()
 
+        # Wait until all threads in the thread poll have finished
+        for thread in self.thread_pool:
+            while thread.isAlive():
+                time.sleep(0.5)
+
         # Update Query Handler's DB collections with the new index and document data.
         self.mongo_connection.update_query_handler_db()
 
