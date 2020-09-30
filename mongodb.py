@@ -104,6 +104,17 @@ class MongoDB:
         # Copy all records from "indexer" db collection to "query_indexer" db collection.
         self.build_query_indexer_db()
 
+    # Used to determine the status of the Query Database collections. If the Index has finished initializing
+    # for the first time, the status returned is always True, since the Query collections always contain the
+    # copy of the last completed Index. If the first index build is in progress, the status returned if False,
+    # since the Query collections have not yet been initialized.
+    def is_initialized(self):
+        collections = self.client.list_collection_names()
+        if "query_documents" in collections and "query_index" in collections:
+            return True
+        else:
+            return False
+
     def get_query_documents_count(self):
         return self.query_documents_db.count()
 
