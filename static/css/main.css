@@ -2,6 +2,11 @@
     text-align: center;
 }
 
+#error-text {
+    text-align: center;
+    font-size: x-large;
+}
+
 #search-form {
     margin: auto;
     display: flex;

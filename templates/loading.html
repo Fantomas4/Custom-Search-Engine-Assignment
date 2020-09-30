@@ -1,0 +1,27 @@
+{% extends 'base.html' %}
+
+{% block head %}
+<title>Better than Google</title>
+{% endblock %}
+
+{% block body %}
+    <h1 id="title">Oops..! Query collections have not been initialized yet!</h1>
+    <p id="error-text">
+        This could mean that the index builder has not been executed yet! <br>
+        If that's the case, please execute the index builder first and try again!
+    </p>
+    <p id="error-text">
+        It could also mean that the index builder is currently being executed for the first time!<br>
+        If that's the case, please wait while the index is being initialized!<br>
+        Good news, however! After the operation is complete, you will be able<br>
+        to execute queries <b>regardless of any future index rebuild operations<br>
+        being conducted concurrently</b>.
+    </p>
+    <p id="error-text">
+        The required time for the initial index build depends on the size of the documents being
+        processed.
+    </p>
+    <p id="error-text">
+        Please refresh your page and try again later!
+    </p>
+{% endblock %}

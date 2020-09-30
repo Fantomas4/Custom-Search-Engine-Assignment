@@ -2,6 +2,7 @@ from pymongo import MongoClient
 from dotenv import load_dotenv
 import os
 
+
 class MongoDB:
 
     def __init__(self, username, password, ip, database):
@@ -51,6 +52,9 @@ class MongoDB:
     def find_all_document_records(self):
         return self.documents_db.find({})
 
+    def add_length_to_document(self, doc_id, doc_length):
+        self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_length}})
+
     def add_index_entry(self, json):
         self.indexer_db.insert_one(json)
 
@@ -90,11 +94,26 @@ class MongoDB:
     def build_query_indexer_db(self):
         self.query_indexer_db.insert_many(self.indexer_db.find({}))
 
-    def find_all_query_document_records(self):
-        return self.query_documents_db.find({})
+    def update_query_handler_db(self):
+        # Reset query handler-related database collections
+        self.reset_query_handler()
 
-    def find_all_query_index_entries(self):
-        return self.query_indexer_db.find({})
+        # Copy all records from "documents" db collection to "query_documents" db collection.
+        self.build_query_documents_db()
+
+        # Copy all records from "indexer" db collection to "query_indexer" db collection.
+        self.build_query_indexer_db()
+
+    # Used to determine the status of the Query Database collections. If the Index has finished initializing
+    # for the first time, the status returned is always True, since the Query collections always contain the
+    # copy of the last completed Index. If the first index build is in progress, the status returned if False,
+    # since the Query collections have not yet been initialized.
+    def is_initialized(self):
+        collections = self.client.list_collection_names()
+        if "query_documents" in collections and "query_index" in collections:
+            return True
+        else:
+            return False
 
     def get_query_documents_count(self):
         return self.query_documents_db.count()
@@ -105,7 +124,6 @@ class MongoDB:
     def find_query_document_record(self, doc_id):
         return self.query_documents_db.find_one({"_id": doc_id})
 
-    def add_length_to_query_document(self, doc_id, doc_length):
-        self.query_documents_db.update({"_id": doc_id}, {"$set": {"length": doc_length}})
+
 
 

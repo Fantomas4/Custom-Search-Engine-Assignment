@@ -1,3 +1,4 @@
+import math
 import threading
 import time
 
@@ -51,9 +52,21 @@ class Indexer:
             while thread.isAlive():
                 time.sleep(0.5)
 
+        # Calculate the document lengths of the given document collection, and store them as a new property
+        # of each document record.
+        self.calculate_doc_lengths()
+
+        # Wait until all threads in the thread poll have finished
+        for thread in self.thread_pool:
+            while thread.isAlive():
+                time.sleep(0.5)
+
         toc = time.perf_counter()
         print("> Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
         print("> Index Building complete!")
+
+        # Update Query Handler's DB collections with the new index and document data.
+        self.mongo_connection.update_query_handler_db()
 
     def process_word(self, document, word):
         doc_id = document["_id"]
@@ -80,3 +93,63 @@ class Indexer:
                                                                   "w_d_freq": bag[word]}]
                                                    })
 
+    def calculate_doc_lengths(self):
+        # Reset thread pool
+        self.thread_pool = []
+
+        for document in self.mongo_connection.find_all_document_records():
+            # Wait until thread pool has an available thread
+            while True:
+                active = 0
+                for thread in self.thread_pool:
+                    if thread.isAlive():
+                        active += 1
+                if active < self.threads_num:
+                    break
+                else:
+                    time.sleep(0.5)
+
+            new_task = threading.Thread(target=self.calculate_doc_length, args=(document,))
+            new_task.start()
+            self.thread_pool.append(new_task)
+
+    # Given a document id, searches for the word-document frequency on a given term's document list.
+    def search_w_d_freq(self, doc_id, doc_list):
+        for document in doc_list:
+            if document["_id"] == doc_id:
+                return document["w_d_freq"]
+        # If no w_d_freq data was found, the document is not present in the target term's
+        # document list, so we return 0.
+        return 0
+
+    def calculate_doc_length(self, document):
+        doc_id = document["_id"]
+
+        # Initialize the score accumulator for the current document to 0
+        squared_weights_sum = 0
+
+        # Find maximum word-document frequency value to be used in normalization
+        max_w_d_freq = 1
+        for term_record in self.mongo_connection.find_all_index_entries():
+            w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
+            if w_d_freq > max_w_d_freq:
+                max_w_d_freq = w_d_freq
+
+        for term_record in self.mongo_connection.find_all_index_entries():
+            w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
+            w_freq = term_record["w_freq"]
+
+            norm_w_d_freq = w_d_freq / max_w_d_freq
+            if self.docs_count > 1:
+                norm_inv_d_freq = math.log(self.docs_count / w_freq) / math.log(self.docs_count)
+            else:
+                # If the document collections consists of just 1 document, set inverted document frequency
+                # variable to 1 (thus ignoring inverted document frequency scoring)
+                norm_inv_d_freq = 1
+
+            squared_weights_sum += math.pow(norm_w_d_freq * norm_inv_d_freq, 2)
+
+        # Calculate current document's length and add the document:length pair to the doc_lengths dictionary.
+        doc_len = math.sqrt(squared_weights_sum)
+
+        self.mongo_connection.add_length_to_document(doc_id, doc_len)
