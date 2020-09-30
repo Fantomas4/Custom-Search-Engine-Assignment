@@ -66,12 +66,7 @@ class Indexer:
         print("> Index Building complete!")
 
         # Update Query Handler's DB collections with the new index and document data.
-        print("> Updating Query Handler DB collections...")
         self.mongo_connection.update_query_handler_db()
-        print("> Query Handler DB collections update complete!")
-
-
-
 
     def process_word(self, document, word):
         doc_id = document["_id"]
