@@ -30,7 +30,7 @@ class MongoDB:
         self.crawler_db.insert_one(json)
 
     def find_all_crawler_records(self):
-        return self.crawler_db.find({})
+        return self.crawler_db.find({}, no_cursor_timeout=True)
 
     def crawler_record_exists(self, title, url):
         return self.crawler_db.find_one({"title": title, "url": url}) is not None
@@ -41,7 +41,7 @@ class MongoDB:
 
     # ------------------------------------ Indexer-related methods ------------------------------------
     def build_documents_db(self):
-        self.documents_db.insert_many(self.crawler_db.find({}))
+        self.documents_db.insert_many(self.crawler_db.find({}, no_cursor_timeout=True))
 
     def get_documents_count(self):
         return self.documents_db.count()
@@ -50,7 +50,7 @@ class MongoDB:
         return self.documents_db.find_one({"_id": doc_id})
 
     def find_all_document_records(self):
-        return self.documents_db.find({})
+        return self.documents_db.find({}, no_cursor_timeout=True)
 
     def add_length_to_document(self, doc_id, doc_length):
         self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_length}})
@@ -70,7 +70,7 @@ class MongoDB:
         return self.indexer_db.find_one({"word": term})
 
     def find_all_index_entries(self):
-        return self.indexer_db.find({})
+        return self.indexer_db.find({}, no_cursor_timeout=True)
 
     def index_entry_exists(self, word):
         return self.indexer_db.find_one({"word": word}) is not None
@@ -89,10 +89,10 @@ class MongoDB:
         self.query_indexer_db = self.client.query_index
 
     def build_query_documents_db(self):
-        self.query_documents_db.insert_many(self.documents_db.find({}))
+        self.query_documents_db.insert_many(self.documents_db.find({}, no_cursor_timeout=True))
 
     def build_query_indexer_db(self):
-        self.query_indexer_db.insert_many(self.indexer_db.find({}))
+        self.query_indexer_db.insert_many(self.indexer_db.find({}, no_cursor_timeout=True))
 
     def update_query_handler_db(self):
         # Reset query handler-related database collections
