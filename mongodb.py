@@ -50,7 +50,8 @@ class MongoDB:
         return self.documents_db.find_one({"_id": doc_id})
 
     def find_all_document_record_ids(self):
-        return self.documents_db.find({})
+        mongo_results = self.documents_db.find({}, {"_id": 1})
+        return [item["_id"] for item in mongo_results]
 
     def add_length_to_document(self, doc_id, doc_length):
         self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_length}})

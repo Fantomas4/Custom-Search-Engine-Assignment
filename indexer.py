@@ -10,6 +10,7 @@ class Indexer:
     def __init__(self, threads_num=4):
         self.docs_count = 0
         self.doc_lengths = {}
+        self.document_ids = []
 
         self.mongo_connection = MongoDB.connect_to_db()
         self.threads_num = threads_num
@@ -30,7 +31,11 @@ class Indexer:
         # Get the documents total count
         self.docs_count = self.mongo_connection.get_documents_count()
 
-        for document in self.mongo_connection.find_all_document_records():
+        # Get all document IDs from the database
+        self.document_ids = self.mongo_connection.find_all_document_record_ids()
+
+        for document_id in self.document_ids:
+            document = self.mongo_connection.find_document_record(document_id)
             print("Entered loop! Time: ", time.perf_counter())
             bag = document["bag"]
             for word in bag:
@@ -104,7 +109,8 @@ class Indexer:
         # Reset thread pool
         self.thread_pool = []
 
-        for document in self.mongo_connection.find_all_document_records():
+        for document_id in self.document_ids:
+            document = self.mongo_connection.find_document_record(document_id)
             # Wait until thread pool has an available thread
             while True:
                 active = 0
