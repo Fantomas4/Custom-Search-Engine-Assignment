@@ -41,7 +41,7 @@ class MongoDB:
 
     # ------------------------------------ Indexer-related methods ------------------------------------
     def build_documents_db(self):
-        self.documents_db.insert_many(self.crawler_db.find({}, no_cursor_timeout=True))
+        self.documents_db.insert_many(self.crawler_db.find({}))
 
     def get_documents_count(self):
         return self.documents_db.count()
@@ -49,8 +49,8 @@ class MongoDB:
     def find_document_record(self, doc_id):
         return self.documents_db.find_one({"_id": doc_id})
 
-    def find_all_document_records(self):
-        return self.documents_db.find({}, no_cursor_timeout=True)
+    def find_all_document_record_ids(self):
+        return self.documents_db.find({})
 
     def add_length_to_document(self, doc_id, doc_length):
         self.documents_db.update({"_id": doc_id}, {"$set": {"length": doc_length}})
@@ -70,7 +70,7 @@ class MongoDB:
         return self.indexer_db.find_one({"word": term})
 
     def find_all_index_entries(self):
-        return self.indexer_db.find({}, no_cursor_timeout=True)
+        return self.indexer_db.find({})
 
     def index_entry_exists(self, word):
         return self.indexer_db.find_one({"word": word}) is not None
@@ -89,10 +89,10 @@ class MongoDB:
         self.query_indexer_db = self.client.query_index
 
     def build_query_documents_db(self):
-        self.query_documents_db.insert_many(self.documents_db.find({}, no_cursor_timeout=True))
+        self.query_documents_db.insert_many(self.documents_db.find({}))
 
     def build_query_indexer_db(self):
-        self.query_indexer_db.insert_many(self.indexer_db.find({}, no_cursor_timeout=True))
+        self.query_indexer_db.insert_many(self.indexer_db.find({}))
 
     def update_query_handler_db(self):
         # Reset query handler-related database collections
