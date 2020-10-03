@@ -34,8 +34,13 @@ class Indexer:
         # Get all document IDs from the database
         self.document_ids = self.mongo_connection.find_all_document_record_ids()
 
+        doc_counter = 0  # Keeps count of the amount of documents processed.
+
         for document_id in self.document_ids:
-            # print("Entered loop! Time: ", time.perf_counter())
+            doc_counter += 1
+            print("> Index Builder: Processing document {counter} of {total}...".format(counter=doc_counter,
+                                                                                        total=self.docs_count))
+
             document = self.mongo_connection.find_document_record(document_id)
             bag = document["bag"]
             for word in bag:
