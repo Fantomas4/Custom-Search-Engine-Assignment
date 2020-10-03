@@ -35,8 +35,8 @@ class Indexer:
         self.document_ids = self.mongo_connection.find_all_document_record_ids()
 
         for document_id in self.document_ids:
+            # print("Entered loop! Time: ", time.perf_counter())
             document = self.mongo_connection.find_document_record(document_id)
-            print("Entered loop! Time: ", time.perf_counter())
             bag = document["bag"]
             for word in bag:
                 while True:  # it will stay here till a thread is available
@@ -78,7 +78,9 @@ class Indexer:
         print("> Document lengths calculation complete!")
 
         # Update Query Handler's DB collections with the new index and document data.
+        print("> Updating Query Handler's DB collections using Index DB collections...")
         self.mongo_connection.update_query_handler_db()
+        print("> Query Handler's DB collections update complete!")
 
     def process_word(self, document, word):
         doc_id = document["_id"]
