@@ -10,6 +10,7 @@ class Indexer:
     def __init__(self, threads_num=4):
         self.docs_count = 0
         self.doc_lengths = {}
+        self.document_ids = []
 
         self.mongo_connection = MongoDB.connect_to_db()
         self.threads_num = threads_num
@@ -30,7 +31,12 @@ class Indexer:
         # Get the documents total count
         self.docs_count = self.mongo_connection.get_documents_count()
 
-        for document in self.mongo_connection.find_all_document_records():
+        # Get all document IDs from the database
+        self.document_ids = self.mongo_connection.find_all_document_record_ids()
+
+        for document_id in self.document_ids:
+            # print("Entered loop! Time: ", time.perf_counter())
+            document = self.mongo_connection.find_document_record(document_id)
             bag = document["bag"]
             for word in bag:
                 while True:  # it will stay here till a thread is available
@@ -52,8 +58,14 @@ class Indexer:
             while thread.isAlive():
                 time.sleep(0.5)
 
+        toc = time.perf_counter()
+        print("> Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
+        print("> Index building complete!")
+
         # Calculate the document lengths of the given document collection, and store them as a new property
         # of each document record.
+        print("> Calculating document lengths...")
+        tic = time.perf_counter()
         self.calculate_doc_lengths()
 
         # Wait until all threads in the thread poll have finished
@@ -62,11 +74,13 @@ class Indexer:
                 time.sleep(0.5)
 
         toc = time.perf_counter()
-        print("> Index builder execution time: " + "{:.2f}".format(toc - tic) + " secs")
-        print("> Index Building complete!")
+        print("> Document lengths calculation execution time: " + "{:.2f}".format(toc - tic) + " secs")
+        print("> Document lengths calculation complete!")
 
         # Update Query Handler's DB collections with the new index and document data.
+        print("> Updating Query Handler's DB collections using Index DB collections...")
         self.mongo_connection.update_query_handler_db()
+        print("> Query Handler's DB collections update complete!")
 
     def process_word(self, document, word):
         doc_id = document["_id"]
@@ -97,7 +111,8 @@ class Indexer:
         # Reset thread pool
         self.thread_pool = []
 
-        for document in self.mongo_connection.find_all_document_records():
+        for document_id in self.document_ids:
+            document = self.mongo_connection.find_document_record(document_id)
             # Wait until thread pool has an available thread
             while True:
                 active = 0
