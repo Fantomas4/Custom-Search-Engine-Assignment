@@ -120,7 +120,13 @@ class Indexer:
         # Get all index entry IDs
         self.index_ids = self.mongo_connection.find_all_index_entry_ids()
 
+        doc_counter = 0  # Keeps count of the amount of documents processed.
+
         for document_id in self.document_ids:
+            doc_counter += 1
+            print("> Document lengths calculation: Processing document {counter} of {total}...".format(
+                counter=doc_counter, total=self.docs_count))
+
             document = self.mongo_connection.find_document_record(document_id)
             # Wait until thread pool has an available thread
             while True:
