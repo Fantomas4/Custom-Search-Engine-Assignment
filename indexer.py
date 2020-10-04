@@ -11,6 +11,7 @@ class Indexer:
         self.docs_count = 0
         self.doc_lengths = {}
         self.document_ids = []
+        self.index_ids = []
 
         self.mongo_connection = MongoDB.connect_to_db()
         self.threads_num = threads_num
@@ -34,8 +35,13 @@ class Indexer:
         # Get all document IDs from the database
         self.document_ids = self.mongo_connection.find_all_document_record_ids()
 
+        doc_counter = 0  # Keeps count of the amount of documents processed.
+
         for document_id in self.document_ids:
-            # print("Entered loop! Time: ", time.perf_counter())
+            doc_counter += 1
+            print("> Index Builder: Processing document {counter} of {total}...".format(counter=doc_counter,
+                                                                                        total=self.docs_count))
+
             document = self.mongo_connection.find_document_record(document_id)
             bag = document["bag"]
             for word in bag:
@@ -111,7 +117,16 @@ class Indexer:
         # Reset thread pool
         self.thread_pool = []
 
+        # Get all index entry IDs
+        self.index_ids = self.mongo_connection.find_all_index_entry_ids()
+
+        doc_counter = 0  # Keeps count of the amount of documents processed.
+
         for document_id in self.document_ids:
+            doc_counter += 1
+            print("> Document lengths calculation: Processing document {counter} of {total}...".format(
+                counter=doc_counter, total=self.docs_count))
+
             document = self.mongo_connection.find_document_record(document_id)
             # Wait until thread pool has an available thread
             while True:
@@ -145,12 +160,14 @@ class Indexer:
 
         # Find maximum word-document frequency value to be used in normalization
         max_w_d_freq = 1
-        for term_record in self.mongo_connection.find_all_index_entries():
+        for index_id in self.index_ids:
+            term_record = self.mongo_connection.find_index_entry(index_id)
             w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
             if w_d_freq > max_w_d_freq:
                 max_w_d_freq = w_d_freq
 
-        for term_record in self.mongo_connection.find_all_index_entries():
+        for index_id in self.index_ids:
+            term_record = self.mongo_connection.find_index_entry(index_id)
             w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
             w_freq = term_record["w_freq"]
 
