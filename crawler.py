@@ -104,6 +104,8 @@ class Crawler:
 
             with self.count_locker:  # Save the page information to the Database as a new document
                 if self.global_counter < self.size:
+                    print("> Crawler: Finished crawling document {counter} of {total}...".format(counter=self.global_counter + 1,
+                                                                                                 total=self.size))
                     self.mongo_connection.add_crawler_record({"url": url, "title": title, "bag": Counter(lowercase_words)})
                     self.global_counter += 1
         except Exception:  # something went wrong during this phase, so we will not have any results
