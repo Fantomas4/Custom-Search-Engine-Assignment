@@ -154,20 +154,21 @@ class Indexer:
 
     def calculate_doc_length(self, document):
         doc_id = document["_id"]
+        bag = document["bag"]
 
         # Initialize the score accumulator for the current document to 0
         squared_weights_sum = 0
 
-        # Find maximum word-document frequency value to be used in normalization
+        # Find maximum word-document frequency value (used in normalization) for the current document
         max_w_d_freq = 1
-        for index_id in self.index_ids:
-            term_record = self.mongo_connection.find_index_entry(index_id)
+        for keyword in bag:
+            term_record = self.mongo_connection.find_index_entry_by_keyword(keyword)
             w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
             if w_d_freq > max_w_d_freq:
                 max_w_d_freq = w_d_freq
 
-        for index_id in self.index_ids:
-            term_record = self.mongo_connection.find_index_entry(index_id)
+        for keyword in bag:
+            term_record = self.mongo_connection.find_index_entry_by_keyword(keyword)
             w_d_freq = self.search_w_d_freq(doc_id, term_record["documents"])
             w_freq = term_record["w_freq"]
 

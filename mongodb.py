@@ -67,6 +67,9 @@ class MongoDB:
         self.indexer_db.update({"word": word},
                                {"$set": {"w_freq": w_freq, "documents": documents}})
 
+    def find_index_entry_by_keyword(self, word):
+        return self.indexer_db.find_one({"word": word})
+
     def find_index_entry(self, entry_id):
         return self.indexer_db.find_one({"_id": entry_id})
 
