@@ -11,11 +11,8 @@ class Indexer:
         self.docs_count = 0
         self.doc_lengths = {}
         self.document_ids = []
-        self.index_ids = []
-
         self.mongo_connection = MongoDB.connect_to_db()
         self.threads_num = threads_num
-
         self.thread_pool = []
 
     def build_index(self):
@@ -116,9 +113,6 @@ class Indexer:
     def calculate_doc_lengths(self):
         # Reset thread pool
         self.thread_pool = []
-
-        # Get all index entry IDs
-        self.index_ids = self.mongo_connection.find_all_index_entry_ids()
 
         doc_counter = 0  # Keeps count of the amount of documents processed.
 
