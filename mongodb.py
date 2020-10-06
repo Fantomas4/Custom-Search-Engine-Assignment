@@ -67,12 +67,8 @@ class MongoDB:
         self.indexer_db.update({"word": word},
                                {"$set": {"w_freq": w_freq, "documents": documents}})
 
-    def find_index_entry(self, entry_id):
-        return self.indexer_db.find_one({"_id": entry_id})
-
-    def find_all_index_entry_ids(self):
-        mongo_results = self.indexer_db.find({}, {"_id": 1})
-        return [item["_id"] for item in mongo_results]
+    def find_index_entry_by_keyword(self, word):
+        return self.indexer_db.find_one({"word": word})
 
     def index_entry_exists(self, word):
         return self.indexer_db.find_one({"word": word}) is not None
